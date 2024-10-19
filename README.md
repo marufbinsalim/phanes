@@ -17,7 +17,7 @@ Features:
 - resend for email sending
 
 ## to deploy the supabase edge function:
-bash```
+```bash
 supabase functions deploy send-email-invites --project-ref atqtnstlgksxrtscusgd
 ```
 
