@@ -7,3 +7,11 @@ Features:
 - takes in a list of emails
 - Creates user in supabase with randomly generated credentials in bulk
 - For the created users - sends an email to the users emails, with the login link and password
+
+
+## Made with the following:
+
+- supabase cli
+- deno
+- supabase sdk
+- resend for email sending
