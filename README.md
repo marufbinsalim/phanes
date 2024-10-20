@@ -2,13 +2,13 @@
 
 - created for a client in fiverr
 
-Features:
+## Features:
 
 - takes in a list of emails
-- Creates user in supabase with the emails, randomly generated credentials in bulk
+- Creates user in supabase with the emails, randomly generated credentials in bulk / parallel
 - For the created users - sends an email to the users emails, with the login link and password
-- Error Handling
 - company id connection to new account
+- Error Handling
 
 ## Made with the following:
 
@@ -20,27 +20,8 @@ Features:
 ## Guidelines to replicate:
 
 - Setup domain in resend to send emails to users
-- Email confirmation for authentication should be disabled in supabase project
 - To locally run (see supabase edge functions set up guide)
 - Tldr, you'd need supabase cli, docker apt, and docker engine setup to run locally
-
-## to deploy the supabase edge function:
-
-```bash
-supabase functions deploy send-email-invites --project-ref atqtnstlgksxrtscusgd
-```
-
-## through npx (if you don't have supabase CLI installed):
-
-```bash
-npx supabase functions deploy send-email-invites --project-ref atqtnstlgksxrtscusgd
-```
-
-## to invoke globally:
-
-```bash
-curl -L -X POST 'https://<project-ref>.supabase.co/functions/v1/send-email-invites' -H 'Authorization: Bearer <anon>'    --data '{"emails": ["x@gmail.com", "y@gmail.com"]}'
-```
 
 ## secrets to set:
 
@@ -70,13 +51,19 @@ The email contains the email and password of the user and a link to login to the
 
 ## Example Request
 
-curl -L -X POST 'https://<ref>.supabase.co/functions/v1/send-email-invites' -H 'Authorization
+```bash
+curl -L -X POST 'https://<project-ref>.supabase.co/functions/v1/send-email-invites' -H 'Authorization: Bearer <anon>'    --data '{"emails": ["x@gmail.com", "y@gmail.com"]}'
+```
+
+## Example: Invoking the function using the Supabase client:
+
+```ts
+const { data, error } = await supabase.functions.invoke("send-email-invites", {
+  body: { emails: ["user1@gmail.com", "user2@gmail.com"] },
+});
+```
 
 ## Example Response
-
-- creation_success: true if the user was created successfully, false otherwise
-- email_success: true if the email was sent successfully, false otherwise
-- company_connected: true if the user was successfully connected to the company, false otherwise
 
 ```json
 [
@@ -97,17 +84,25 @@ curl -L -X POST 'https://<ref>.supabase.co/functions/v1/send-email-invites' -H '
 ]
 ```
 
-## Invoke the function using the Supabase client:
+- creation_success: true if the user was created successfully, false otherwise
+- email_success: true if the email was sent successfully, false otherwise
+- company_connected: true if the user was successfully connected to the company, false otherwise
 
-```ts
-const { data, error } = await supabase.functions.invoke("send-email-invites", {
-  body: { emails: ["user1@gmail.com", "user2@gmail.com"] },
-});
-```
-
-set up the function in the supabase dashboard:
+# set up the function secrets locally:
 
 ```bash
 - supabase secrets set RESEND_API_KEY=your_resend_api_key
 - other secrets: SUPABASE_URL, SUPABASE_ANON_KEY, SUPABASE_SERVICE_ROLE_KEY are already set in the function by default
+```
+
+## to deploy the supabase edge function:
+
+```bash
+supabase functions deploy send-email-invites --project-ref <ref>
+```
+
+## through npx (if you don't have supabase CLI installed):
+
+```bash
+npx supabase functions deploy send-email-invites --project-ref <ref>
 ```
