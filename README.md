@@ -2,12 +2,13 @@
 
 - created for a client in fiverr
 
-
 Features:
+
 - takes in a list of emails
 - Creates user in supabase with the emails, randomly generated credentials in bulk
 - For the created users - sends an email to the users emails, with the login link and password
-- Error Handling 
+- Error Handling
+- company id connection to new account
 
 ## Made with the following:
 
@@ -16,8 +17,8 @@ Features:
 - supabase sdk
 - resend for email sending
 
-
 ## Guidelines to replicate:
+
 - Setup domain in resend to send emails to users
 - Email confirmation for authentication should be disabled in supabase project
 - To locally run (see supabase edge functions set up guide)
@@ -50,3 +51,59 @@ SUPABASE_ANON_KEY=your_supabase_anon_key
 SUPABASE_SERVICE_ROLE_KEY=your_supabase_service_role_key
 ```
 
+## Dpcumentation for the function
+
+### Description
+
+This function is used to send email invites to users. It takes a list of emails and sends an email to each email with a randomly generated password.
+The email contains the email and password of the user and a link to login to the platform.
+
+### Request
+
+- Method: POST
+- Endpoint: <url>/functions/v1/send-email-invites
+- Headers:
+  - Authorization: Bearer <Supabase Anon Key>
+- Body:
+  - emails: string[]
+    - list of emails to send invites to
+
+## Example Request
+
+curl -L -X POST 'https://<ref>.supabase.co/functions/v1/send-email-invites' -H 'Authorization
+
+## Example Response
+
+```json
+[
+  {
+    "email": "user1@gmail.com",
+    "password": "password1",
+    "creation_success": true, // true if user was created successfully in the auth table
+    "email_success": true, // true if email was sent successfully
+    "company_connected": true // true if the user was successfully connected to the company (ie. company_id updated to users table row)
+  },
+  {
+    "email": "user2@gmail.com",
+    "password": "password2",
+    "creation_success": false,
+    "email_success": false,
+    "company_connected": false
+  }
+]
+```
+
+## Invoke the function using the Supabase client:
+
+```ts
+const { data, error } = await supabase.functions.invoke("send-email-invites", {
+  body: { emails: ["user1@gmail.com", "user2@gmail.com"] },
+});
+```
+
+set up the function in the supabase dashboard:
+
+```bash
+- supabase secrets set RESEND_API_KEY=your_resend_api_key
+- other secrets: SUPABASE_URL, SUPABASE_ANON_KEY, SUPABASE_SERVICE_ROLE_KEY are already set in the function by default
+```
