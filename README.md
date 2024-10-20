@@ -32,12 +32,10 @@ SUPABASE_ANON_KEY=your_supabase_anon_key
 SUPABASE_SERVICE_ROLE_KEY=your_supabase_service_role_key
 ```
 
-## Dpcumentation for the function
-
 ### Description
 
 This function is used to send email invites to users. It takes a list of emails and sends an email to each email with a randomly generated password.
-The email contains the email and password of the user and a link to login to the platform.
+The email contains the email and password of the user and a link to login to the platform. Also users are linked to company id of the user who invoked the function
 
 ### Request
 
