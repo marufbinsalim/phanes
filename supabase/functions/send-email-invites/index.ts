@@ -121,7 +121,6 @@ async function sendEmails(
     });
   });
 
-  // Use Promise.allSettled to handle both fulfilled and rejected promises
   const responses = await Promise.allSettled(batchRequests);
 
   const results = responses.map((res, i) => {
@@ -307,21 +306,3 @@ Deno.serve(async (req) => {
     headers: { ...CORS_HEADERS, "Content-Type": "application/json" },
   });
 });
-
-/*
-
-to deploy the supabase edge function:
-supabase functions deploy send-email-invites --project-ref <your_project_ref>
-
-through npx (if you don't have supabase CLI installed):
-npx supabase functions deploy send-email-invites --project-ref <your_project_ref>
-
-to invoke globally:
-curl -L -X POST 'https://jqiqjdstmpsytnjfuzke.supabase.co/functions/v1/send-email-invites' -H 'Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpxaXFqZHN0bXBzeXRuamZ1emtlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MjE5MjI0NDMsImV4cCI6MjAzNzQ5ODQ0M30.5_yZrPltu2HQ_xZFqfiErd8V4foauBXs5XMS3zMEcF4'    --data '{"emails": ["marufbinsalim01@gmail.com"]}'
-
-secrets to set:
-RESEND_API_KEY=your_resend_api_key
-SUPABASE_URL=your_supabase_url
-SUPABASE_ANON_KEY=your_supabase_anon_key
-SUPABASE_SERVICE_ROLE_KEY=your_supabase_service_role_key
-*/
