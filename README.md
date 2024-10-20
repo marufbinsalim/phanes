@@ -74,9 +74,9 @@ curl -L -X POST 'https://<ref>.supabase.co/functions/v1/send-email-invites' -H '
 
 ## Example Response
 
-creation_success: true if the user was created successfully, false otherwise
-email_success: true if the email was sent successfully, false otherwise
-company_connected: true if the user was successfully connected to the company, false otherwise
+- creation_success: true if the user was created successfully, false otherwise
+- email_success: true if the email was sent successfully, false otherwise
+- company_connected: true if the user was successfully connected to the company, false otherwise
 
 ```json
 [
