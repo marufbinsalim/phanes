@@ -6,7 +6,7 @@ const URL = Deno.env.get("SUPABASE_URL") ?? "";
 const ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY") ?? "";
 const SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
 
-const EMAIL_FROM = "Company <catalystars@catalystars.com>";
+const EMAIL_FROM = "Himanshu <catalystars@catalystars.com>";
 export const CORS_HEADERS = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers":
@@ -17,12 +17,14 @@ interface UserCreationType {
   email: string;
   password: string;
   company_id: string;
+  base_url: string;
 }
 
 interface UserCreationResponse {
   email: string;
   password: string;
   creation_success: boolean;
+  invite_url: string;
 }
 
 interface EmailResponse {
@@ -30,12 +32,13 @@ interface EmailResponse {
   password: string;
   creation_success: boolean;
   email_success: boolean;
+  invite_url: string;
 }
 
 console.log("starting the function");
 
 async function createUsers(
-  users: UserCreationType[]
+  users: UserCreationType[],
 ): Promise<UserCreationResponse[]> {
   // Create a Supabase client with the Auth context of the logged in user.
   const supabaseAdminClient = createClient(URL, ANON_KEY, {
@@ -56,12 +59,12 @@ async function createUsers(
       email: user.email,
       password: user.password,
       email_confirm: true,
-      user_metadata: { company_id: user.company_id },
+      user_metadata: { company_id: user.company_id, email: user.email },
     });
   });
 
   const responses = (await Promise.allSettled(
-    batchRequests
+    batchRequests,
   )) as PromiseSettledResult<{
     error: boolean | null;
   }>[];
@@ -82,6 +85,9 @@ async function createUsers(
       email: users[i].email,
       password: users[i].password,
       creation_success: error ? false : true,
+      invite_url: `${users[i].base_url}/invite?email=${
+        users[i].email
+      }&password=${users[i].password}`,
     };
   });
 
@@ -89,7 +95,7 @@ async function createUsers(
 }
 
 async function sendEmails(
-  data: UserCreationResponse[]
+  data: UserCreationResponse[],
 ): Promise<EmailResponse[]> {
   const batchRequests = data.map((data) => {
     if (!data.creation_success) {
@@ -114,7 +120,7 @@ async function sendEmails(
             <p>Here are your login details:</p>
             <p>Email: ${data.email}</p>
             <p>Password: ${data.password}</p>
-            <p>Click <a href="https://example.com/login?password=${data.password}">here</a> to login</p>
+            <p>Click <a href="${data.invite_url}">here</a> to login</p>
           </div>
           `,
       }),
@@ -130,6 +136,7 @@ async function sendEmails(
         password: data[i].password,
         creation_success: data[i].creation_success,
         email_success: true,
+        invite_url: data[i].invite_url,
       };
     }
 
@@ -138,6 +145,7 @@ async function sendEmails(
       password: data[i].password,
       creation_success: data[i].creation_success,
       email_success: false,
+      invite_url: data[i].invite_url,
     };
   });
 
@@ -169,7 +177,7 @@ Deno.serve(async (req) => {
   }
   const supabaseClient = createClient(
     Deno.env.get("SUPABASE_URL") ?? "",
-    Deno.env.get("SUPABASE_ANON_KEY") ?? ""
+    Deno.env.get("SUPABASE_ANON_KEY") ?? "",
   );
 
   // Get the session or user object
@@ -186,7 +194,7 @@ Deno.serve(async (req) => {
       {
         status: 200,
         headers: { ...CORS_HEADERS, "Content-Type": "application/json" },
-      }
+      },
     );
   }
 
@@ -203,7 +211,7 @@ Deno.serve(async (req) => {
       {
         status: 200,
         headers: { ...CORS_HEADERS, "Content-Type": "application/json" },
-      }
+      },
     );
   }
 
@@ -215,11 +223,21 @@ Deno.serve(async (req) => {
       {
         status: 200,
         headers: { ...CORS_HEADERS, "Content-Type": "application/json" },
-      }
+      },
     );
   }
 
   const body = await req.json();
+
+  if (!body?.url) {
+    return new Response(
+      JSON.stringify({ error: "'url' : string is required" }),
+      {
+        status: 200,
+        headers: { ...CORS_HEADERS, "Content-Type": "application/json" },
+      },
+    );
+  }
 
   // return error if emails are not provided
   if (!body?.emails) {
@@ -228,7 +246,7 @@ Deno.serve(async (req) => {
       {
         status: 200,
         headers: { ...CORS_HEADERS, "Content-Type": "application/json" },
-      }
+      },
     );
   }
   // return error if emails is not an array of strings
@@ -239,7 +257,7 @@ Deno.serve(async (req) => {
       {
         status: 200,
         headers: { ...CORS_HEADERS, "Content-Type": "application/json" },
-      }
+      },
     );
   }
 
@@ -250,6 +268,7 @@ Deno.serve(async (req) => {
       email,
       password: createRandomPassword(13),
       company_id: requestedByUserData.company_id,
+      base_url: body.url,
     };
   });
 
@@ -257,6 +276,13 @@ Deno.serve(async (req) => {
   const emailSendingResults = await sendEmails(userCreationResults);
 
   const batchRequests = userCreationResults.map((res) => {
+    if (!res.creation_success) {
+      return Promise.resolve({
+        status: "rejected",
+        statusText: "ERORR",
+      });
+    }
+
     return supabaseClient
       .from("users")
       .update({
@@ -277,28 +303,31 @@ Deno.serve(async (req) => {
       };
     }
 
-    if (!res || !res.value)
+    if (
+      !res || !res.value ||
+      (res.value.statusText && res.value.statusText === "ERORR")
+    ) {
       return {
         ...emailSendingResults[i],
         company_connected: false,
       };
+    }
 
     const { data } = res.value;
     console.log(
       "res, cs, cid, ",
       res.value.data,
       emailSendingResults[i].creation_success,
-      requestedByUserData.company_id
+      requestedByUserData.company_id,
     );
     return {
       ...emailSendingResults[i],
-      company_connected:
-        emailSendingResults[i].creation_success &&
-        data &&
-        data.length > 0 &&
-        data[0].company_id === requestedByUserData.company_id
-          ? true
-          : false,
+      company_connected: emailSendingResults[i].creation_success &&
+          data &&
+          data.length > 0 &&
+          data[0].company_id === requestedByUserData.company_id
+        ? true
+        : false,
     };
   });
 
