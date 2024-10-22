@@ -46,18 +46,23 @@ The email contains the email and password of the user and a link to login to the
 - Body:
   - emails: string[]
     - list of emails to send invites to
+  - url: string
+    - base url of the website (with https protocol)
 
 ## Example Request
 
 ```bash
-curl -L -X POST 'https://<project-ref>.supabase.co/functions/v1/send-email-invites' -H 'Authorization: Bearer <anon>'    --data '{"emails": ["x@gmail.com", "y@gmail.com"]}'
+curl -L -X POST 'https://<project-ref>.supabase.co/functions/v1/send-email-invites' -H 'Authorization: Bearer <anon>'    --data '{"emails": ["x@gmail.com", "y@gmail.com"], "url": "your_website.com"}'
 ```
 
 ## Example: Invoking the function using the Supabase client:
 
 ```ts
 const { data, error } = await supabase.functions.invoke("send-email-invites", {
-  body: { emails: ["user1@gmail.com", "user2@gmail.com"] },
+  body: {
+    emails: ["user1@gmail.com", "user2@gmail.com"],
+    url: "https://example.com",
+  },
 });
 ```
 
@@ -66,10 +71,11 @@ const { data, error } = await supabase.functions.invoke("send-email-invites", {
 ```json
 [
   {
-    "email": "user1@gmail.com",
-    "password": "password1",
+    "email": "mdmarufbinsalim@gmail.com",
+    "password": "6BJcUfGMF8zrZ",
     "creation_success": true,
     "email_success": true,
+    "invite_url": "https://hello.com/invite?email=user1@gmail.com&password=6BJcUfGMF8zrZ",
     "company_connected": true
   },
   {
@@ -77,6 +83,7 @@ const { data, error } = await supabase.functions.invoke("send-email-invites", {
     "password": "password2",
     "creation_success": false,
     "email_success": false,
+    "invite_url": "https://hello.com/invite?email=user2@gmail.com&password=6BJcUfGMF8zrZ",
     "company_connected": false
   }
 ]
