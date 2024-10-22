@@ -4,7 +4,7 @@
 
 ## Features:
 
-- takes in a list of emails
+- takes in a list of emails and url of the hosted site
 - Creates user in supabase with the emails, randomly generated credentials in bulk / parallel
 - For the created users - sends an email to the users emails, with the login link and password
 - company id connection to new account
